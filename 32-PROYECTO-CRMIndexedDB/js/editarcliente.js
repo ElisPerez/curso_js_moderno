@@ -1,5 +1,6 @@
 (function () {
-  let DB;
+  // let DB;
+  let idCliente;
 
   const nombreInput = document.querySelector('#nombre');
   const emailInput = document.querySelector('#email');
@@ -17,7 +18,7 @@
     // Verificar el id de la url
     const parametrosUrl = new URLSearchParams(window.location.search);
 
-    const idCliente = parametrosUrl.get('id');
+    idCliente = parametrosUrl.get('id');
     // console.log('idCliente:', idCliente);
 
     if (idCliente) {
@@ -38,6 +39,31 @@
     ) {
       imprimirAlerta('Todos los campos son obligatorios', 'error');
     }
+
+    // Actualizar Cliente
+    const clienteActualizado = {
+      nombre: nombreInput.value,
+      email: emailInput.value,
+      telefono: telefonoInput.value,
+      empresa: empresaInput.value,
+      id: Number(idCliente),
+    }
+    const transaction = DB.transaction(['crm'], 'readwrite');
+    const objectStore = transaction.objectStore('crm');
+
+    objectStore.put(clienteActualizado);
+
+    transaction.oncomplete = function () {
+      imprimirAlerta('Editado correctamente');
+
+      setTimeout(() => {
+        window.location.href = 'index.html'
+      }, 3000);
+    }
+
+    transaction.onerror = function() {
+      imprimirAlerta('Hubo un error', 'error')
+    }
   }
 
   function obtenerCliente(id) {
@@ -50,7 +76,7 @@
       const cursor = e.target.result;
 
       if (cursor) {
-        console.log(cursor.value);
+        // console.log(cursor.value);
         if (cursor.value.id === Number(id)) {
           llenarFormulario(cursor.value);
         }
@@ -66,17 +92,5 @@
     emailInput.value = email;
     telefonoInput.value = telefono;
     empresaInput.value = empresa;
-  }
-
-  function conectarDB() {
-    const abrirConexion = window.indexedDB.open('crm', 1);
-
-    abrirConexion.onerror = function () {
-      console.log('Hubo un error');
-    };
-
-    abrirConexion.onsuccess = function () {
-      DB = abrirConexion.result;
-    };
   }
 })();
