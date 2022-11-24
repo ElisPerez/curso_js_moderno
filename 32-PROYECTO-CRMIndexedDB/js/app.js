@@ -1,5 +1,6 @@
 (function () {
   let DB;
+  const listadoClientes = document.querySelector('#listado-clientes');
 
   document.addEventListener('DOMContentLoaded', () => {
     createDB();
@@ -7,7 +8,36 @@
     if (window.indexedDB.open('crm', 1)) {
       obtenerClientes();
     }
+
+    listadoClientes.addEventListener('click', eliminarRegistro);
   });
+
+  // Eliminar Registro
+  function eliminarRegistro(e) {
+    // console.log(e.target.classList);
+    if (e.target.classList.contains('eliminar')) {
+      const idEliminar = Number(e.target.dataset.cliente);
+
+      const confirmar = confirm('¿Deseas eliminar este cliente?') // confirm() es nativa de Javascript
+      // console.log(confirmar);
+
+      if (confirmar) {
+        const transaction = DB.transaction(['crm'], 'readwrite');
+        const objectStore = transaction.objectStore('crm');
+        objectStore.delete(idEliminar)
+
+        transaction.oncomplete = function() {
+          console.log('eliminado...');
+
+          e.target.parentElement.parentElement.remove();
+        }
+
+        transaction.onerror = function() {
+          console.log('Hubo un error');
+        }
+      }
+    }
+  }
 
   // Crea la base de datos de indexedDB
   function createDB() {
@@ -56,8 +86,6 @@
           // console.log(cursor.value);
           const { nombre, empresa, email, telefono, id } = cursor.value;
 
-          const listadoClientes = document.querySelector('#listado-clientes');
-
           listadoClientes.innerHTML += `
             <tr>
               <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
@@ -72,7 +100,7 @@
               </td>
               <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5">
                   <a href="editar-cliente.html?id=${id}" class="text-teal-600 hover:text-teal-900 mr-5">Editar</a>
-                  <a href="#" data-cliente="${id}" class="text-red-600 hover:text-red-900">Eliminar</a>
+                  <a href="#" data-cliente="${id}" class="text-red-600 hover:text-red-900 eliminar">Eliminar</a>
               </td>
             </tr>
           `;
